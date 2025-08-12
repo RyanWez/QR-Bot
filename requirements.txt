@@ -1,0 +1,5 @@
+python-telegram-bot
+qrcode[pil]
+opencv-python-headless
+numpy
+python-dotenv
