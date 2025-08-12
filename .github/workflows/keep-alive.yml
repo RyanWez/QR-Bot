@@ -1,0 +1,26 @@
+name: Keep Bot Alive
+
+on:
+  schedule:
+    # Run every 5 minutes during active hours (6 AM - 11 PM Myanmar Time)
+    - cron: '*/5 0-17 * * *'  # UTC time (Myanmar is UTC+6:30)
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Bot
+        run: |
+          echo "🏓 Pinging QR MM Bot..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://qr-mm-bot.fly.dev/ping)
+          if [ $response -eq 200 ]; then
+            echo "✅ Bot is alive and responding"
+          else
+            echo "⚠️ Bot responded with status code: $response"
+          fi
+          
+      - name: Health Check
+        run: |
+          echo "🏥 Checking bot health..."
+          curl -s https://qr-mm-bot.fly.dev/health | jq '.'

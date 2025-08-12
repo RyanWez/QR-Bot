@@ -26,7 +26,7 @@ fi
 
 # Set secrets
 echo "🔑 Setting up secrets..."
-read -p "Enter your Telegram Bot Token: " BOT_TOKEN
+read -p "8322541138:AAGGGSK7UI-g4Dwx6pSW0fJVMgiRTmM-7xc: " BOT_TOKEN
 flyctl secrets set TELEGRAM_BOT_TOKEN="$BOT_TOKEN"
 flyctl secrets set WEBHOOK_URL="https://qr-mm-bot.fly.dev"
 flyctl secrets set BOT_NAME="QR MM Bot"

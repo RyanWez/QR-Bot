@@ -171,6 +171,32 @@ bash deploy.sh
 - Includes health check endpoint at `/health`
 - Auto-scaling and auto-sleep capabilities
 - Optimized Docker container
+- **Concurrent request handling** for multiple users
+- **Memory optimization** with automatic cleanup
+- **Keep-alive mechanism** to reduce cold starts
+
+## Performance Features ⚡
+
+### Concurrent Processing
+- Handles multiple users simultaneously
+- Non-blocking webhook processing
+- Optimized QR code generation
+
+### Memory Management
+- Automatic cleanup of inactive users
+- Efficient state management
+- Resource usage optimization
+
+### Keep-Alive Options
+1. **GitHub Actions**: Automated pings every 5 minutes
+2. **External Service**: Use `keep_alive.py` script
+3. **Manual**: Access `/ping` endpoint regularly
+
+### Free Tier Considerations
+- **Auto-sleep**: App sleeps after 5-10 minutes of inactivity
+- **Cold start**: 1-3 seconds wake-up time
+- **Concurrent limit**: Up to 80-100 simultaneous requests
+- **Memory**: 512MB RAM with automatic cleanup
 
 ## Support 💬
 

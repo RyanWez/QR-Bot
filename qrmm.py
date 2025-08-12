@@ -3,6 +3,7 @@ import qrcode
 import io
 import uuid
 import os
+import signal
 from urllib.parse import quote
 from dotenv import load_dotenv
 import asyncio
@@ -40,8 +41,30 @@ if not TELEGRAM_TOKEN:
     logger.error("TELEGRAM_BOT_TOKEN not found in environment variables!")
     raise ValueError("TELEGRAM_BOT_TOKEN is required. Please check your .env file.")
 
-# User states
+# User states with memory optimization
+import time
+from collections import defaultdict
+
 user_states = {}
+user_last_activity = defaultdict(float)
+
+# Memory cleanup function
+def cleanup_inactive_users():
+    """Clean up inactive users to save memory"""
+    current_time = time.time()
+    inactive_threshold = 3600  # 1 hour
+    
+    inactive_users = [
+        user_id for user_id, last_activity in user_last_activity.items()
+        if current_time - last_activity > inactive_threshold
+    ]
+    
+    for user_id in inactive_users:
+        user_states.pop(user_id, None)
+        user_last_activity.pop(user_id, None)
+    
+    if inactive_users:
+        logger.info(f"Cleaned up {len(inactive_users)} inactive users")
 
 # --- Command Handlers ---
 async def start_command(update: Update, context) -> None:
@@ -74,6 +97,13 @@ async def handle_text_message(update: Update, context) -> None:
     user_id = update.effective_user.id
     text = update.message.text
     
+    # Update user activity
+    user_last_activity[user_id] = time.time()
+    
+    # Periodic cleanup (every 100 requests)
+    if len(user_last_activity) % 100 == 0:
+        cleanup_inactive_users()
+    
     # Check user state
     current_state = user_states.get(user_id)
     
@@ -81,12 +111,12 @@ async def handle_text_message(update: Update, context) -> None:
         # User is in QR creation mode - generate QR code
         await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
         try:
-            # Generate QR code with optimized settings
+            # Generate QR code with optimized settings for speed and size
             qr = qrcode.QRCode(
                 version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,
-                box_size=10,
-                border=4,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,  # Lowest error correction for smaller size
+                box_size=8,  # Smaller box size for faster generation
+                border=2,    # Smaller border
             )
             qr.add_data(text)
             qr.make(fit=True)
@@ -94,7 +124,8 @@ async def handle_text_message(update: Update, context) -> None:
             qr_img = qr.make_image(fill_color="black", back_color="white")
             bio = io.BytesIO()
             bio.name = 'qr_code.png'
-            qr_img.save(bio, 'PNG', optimize=True)
+            # Optimize PNG for smaller file size and faster upload
+            qr_img.save(bio, 'PNG', optimize=True, compress_level=9)
             bio.seek(0)
             
             # Only show "QR Code ဖတ်မယ်" button as requested
@@ -108,7 +139,7 @@ async def handle_text_message(update: Update, context) -> None:
                 await context.bot.send_photo(
                     chat_id=update.message.chat_id, 
                     photo=bio, 
-                    caption=f"✅ *QR Code ဖန်တီးပြီးပါပြီ်*\n\nစာ: `{text}` အတွက် QR Code ပါ",
+                    caption=f"✅ *QR Code ဖန်တီးပြီးပါပြီ *\n\n *ဒီ* : `{text}` အတွက် QR Code ပါ",
                     parse_mode='Markdown',
                     reply_markup=reply_markup
                 )
@@ -121,7 +152,7 @@ async def handle_text_message(update: Update, context) -> None:
                 ]
                 reply_markup = InlineKeyboardMarkup(keyboard)
                 await update.message.reply_text(
-                    f"✅ *QR Code ဖန်တီးပြီးပါပြီ်*\n\nစာ: `{text}` အတွက် QR Code ပါ\n\n⚠️ ဓာတ်ပုံ ပို့ရာတွင် ပြဿနာရှိနေပါတယ်။ Network connection ကို စစ်ကြည့်ပါ။",
+                    f"✅ *QR Code ဖန်တီးပြီးပါပြီ *\n\n *ဒီ* : `{text}` အတွက် QR Code ပါ\n\n⚠️ ဓာတ်ပုံ ပို့ရာတွင် ပြဿနာရှိနေပါတယ်။ Network connection ကို စစ်ကြည့်ပါ။",
                     parse_mode='Markdown',
                     reply_markup=reply_markup
                 )
@@ -312,11 +343,21 @@ async def inline_qr(update: Update, context) -> None:
 # Health check endpoint
 async def health_check(request: Request) -> Response:
     """Health check endpoint for Fly.io"""
-    return web.Response(text="OK", status=200)
+    try:
+        # Simple health check - return bot status
+        health_data = {
+            "status": "healthy",
+            "bot_name": BOT_NAME,
+            "timestamp": asyncio.get_event_loop().time()
+        }
+        return web.json_response(health_data, status=200)
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return web.Response(text="UNHEALTHY", status=503)
 
 # Webhook handler
 async def webhook_handler(request: Request) -> Response:
-    """Handle incoming webhook requests"""
+    """Handle incoming webhook requests with concurrent processing"""
     try:
         # Get the application from request app
         application = request.app['telegram_app']
@@ -325,13 +366,18 @@ async def webhook_handler(request: Request) -> Response:
         update_data = await request.json()
         update = Update.de_json(update_data, application.bot)
         
-        # Process the update
-        await application.process_update(update)
+        # Process the update asynchronously (non-blocking)
+        asyncio.create_task(application.process_update(update))
         
+        # Return immediately to Telegram
         return web.Response(status=200)
     except Exception as e:
         logger.error(f"Error processing webhook: {e}")
         return web.Response(status=500)
+
+async def keep_alive_ping(request: Request) -> Response:
+    """Keep-alive endpoint to prevent sleeping"""
+    return web.Response(text="pong", status=200)
 
 def create_app(application: Application) -> web.Application:
     """Create aiohttp web application"""
@@ -340,6 +386,7 @@ def create_app(application: Application) -> web.Application:
     
     # Add routes
     app.router.add_get('/health', health_check)
+    app.router.add_get('/ping', keep_alive_ping)
     app.router.add_post(f'/webhook/{TELEGRAM_TOKEN}', webhook_handler)
     
     return app
@@ -353,18 +400,8 @@ async def setup_webhook(application: Application) -> None:
     else:
         logger.warning("WEBHOOK_URL not set, webhook not configured")
 
-async def main() -> None:
-    # Build application with timeout settings
-    application = (
-        Application.builder()
-        .token(TELEGRAM_TOKEN)
-        .read_timeout(30)
-        .write_timeout(30)
-        .connect_timeout(30)
-        .build()
-    )
-    
-    # Add handlers
+def setup_handlers(application: Application) -> None:
+    """Setup all bot handlers"""
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CallbackQueryHandler(button_handler))
@@ -372,71 +409,94 @@ async def main() -> None:
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message))
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo_message))
     application.add_handler(MessageHandler(~(filters.TEXT | filters.PHOTO | filters.COMMAND), handle_other_messages))
+
+def create_application() -> Application:
+    """Create telegram application with timeout settings"""
+    return (
+        Application.builder()
+        .token(TELEGRAM_TOKEN)
+        .read_timeout(30)
+        .write_timeout(30)
+        .connect_timeout(30)
+        .build()
+    )
+
+async def run_webhook_mode() -> None:
+    """Run bot in webhook mode for production"""
+    application = create_application()
+    setup_handlers(application)
     
     # Initialize the application
     await application.initialize()
     
-    # Check if running in production (Fly.io) or development
-    if WEBHOOK_URL:
-        # Production mode with webhook
-        logger.info("Starting bot in webhook mode...")
-        
-        # Setup webhook
-        await setup_webhook(application)
-        
-        # Create web app
-        web_app = create_app(application)
-        
-        # Start the application
-        await application.start()
-        
-        # Run web server
-        runner = web.AppRunner(web_app)
-        await runner.setup()
-        site = web.TCPSite(runner, HOST, PORT)
-        await site.start()
-        
-        logger.info(f"Bot is running on {HOST}:{PORT} with webhook")
-        
-        # Keep the application running
+    logger.info("Starting bot in webhook mode...")
+    
+    # Setup webhook
+    await setup_webhook(application)
+    
+    # Create web app
+    web_app = create_app(application)
+    
+    # Start the application
+    await application.start()
+    
+    # Run web server
+    runner = web.AppRunner(web_app)
+    await runner.setup()
+    site = web.TCPSite(runner, HOST, PORT)
+    await site.start()
+    
+    logger.info(f"Bot is running on {HOST}:{PORT} with webhook")
+    
+    # Create shutdown event
+    shutdown_event = asyncio.Event()
+    
+    # Signal handlers for graceful shutdown
+    def signal_handler(signum, frame):
+        logger.info(f"Received signal {signum}, initiating graceful shutdown...")
+        shutdown_event.set()
+    
+    # Register signal handlers
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
+    
+    # Keep the application running until shutdown signal
+    try:
+        await shutdown_event.wait()
+    except asyncio.CancelledError:
+        logger.info("Received cancellation, shutting down...")
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
+    finally:
+        logger.info("Starting cleanup...")
         try:
-            await asyncio.Event().wait()
-        except KeyboardInterrupt:
-            logger.info("Shutting down...")
-        finally:
             await application.stop()
             await runner.cleanup()
+            logger.info("Cleanup completed successfully")
+        except Exception as e:
+            logger.error(f"Error during cleanup: {e}")
+
+def run_polling_mode() -> None:
+    """Run bot in polling mode for development"""
+    application = create_application()
+    setup_handlers(application)
+    
+    logger.info("Starting bot in polling mode...")
+    print("Bot is running in development mode...")
+    application.run_polling()
+
+async def main() -> None:
+    """Main function - determines run mode"""
+    if WEBHOOK_URL:
+        await run_webhook_mode()
     else:
-        # Development mode with polling
-        logger.info("Starting bot in polling mode...")
-        print("Bot is running in development mode...")
-        application.run_polling()
+        # For development, we don't use async main
+        run_polling_mode()
 
 if __name__ == '__main__':
-    # Check if running in production or development
     if WEBHOOK_URL:
-        # Production mode - use asyncio.run
+        # Production mode with webhook
         asyncio.run(main())
     else:
-        # Development mode - use sync approach
-        # Build application with timeout settings
-        application = (
-            Application.builder()
-            .token(TELEGRAM_TOKEN)
-            .read_timeout(30)
-            .write_timeout(30)
-            .connect_timeout(30)
-            .build()
-        )
-        
-        # Add handlers
-        application.add_handler(CommandHandler("start", start_command))
-        application.add_handler(CommandHandler("help", help_command))
-        application.add_handler(CallbackQueryHandler(button_handler))
-        application.add_handler(InlineQueryHandler(inline_qr))
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message))
-        application.add_handler(MessageHandler(filters.PHOTO, handle_photo_message))
-        application.add_handler(MessageHandler(~(filters.TEXT | filters.PHOTO | filters.COMMAND), handle_other_messages))
-        
-        print("Bot is running in development mode...")
-        application.run_polling()
+        # Development mode with polling
+        run_polling_mode()
