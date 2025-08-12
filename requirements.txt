@@ -3,3 +3,4 @@ qrcode[pil]
 opencv-python-headless
 numpy
 python-dotenv
+aiohttp

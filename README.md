@@ -98,7 +98,79 @@ The bot includes comprehensive error handling for:
 
 ## License 📄
 
-This project is open source and available under the [MIT License](LICENSE).
+This project is open source and available under the [MIT License](https://github.com/RyanWez/QR-Code?tab=MIT-1-ov-file#).
+
+## Deployment to Fly.io 🚀
+
+### Prerequisites
+1. Install [Fly.io CLI](https://fly.io/docs/hands-on/install-flyctl/)
+2. Create a Fly.io account and login: `flyctl auth login`
+
+### Deployment Steps
+
+#### 1. Create Fly.io App
+```bash
+flyctl apps create qr-mm-bot --org personal
+```
+
+#### 2. Set Environment Variables
+```bash
+flyctl secrets set TELEGRAM_BOT_TOKEN="your_bot_token_here"
+flyctl secrets set WEBHOOK_URL="https://qr-mm-bot.fly.dev"
+flyctl secrets set BOT_NAME="QR MM Bot"
+flyctl secrets set BOT_USERNAME="your_bot_username"
+```
+
+#### 3. Deploy
+```bash
+flyctl deploy
+```
+
+#### 4. Monitor
+```bash
+# Check status
+flyctl status
+
+# View logs
+flyctl logs
+
+# Scale if needed
+flyctl scale count 1
+```
+
+### Production Environment Variables
+
+When deploying to Fly.io, make sure these environment variables are set:
+
+- `TELEGRAM_BOT_TOKEN` - Your bot token from BotFather
+- `WEBHOOK_URL` - Your Fly.io app URL (e.g., https://qr-mm-bot.fly.dev)
+- `PORT` - Port number (automatically set by Fly.io to 8080)
+- `HOST` - Host address (automatically set to 0.0.0.0)
+
+### Automatic Deployment Script
+
+For easier deployment, you can use the provided script:
+
+```bash
+# Linux/Mac
+./deploy.sh
+
+# Windows
+bash deploy.sh
+```
+
+## Architecture 🏗️
+
+### Development Mode
+- Uses **polling** to get updates from Telegram
+- Runs locally on your machine
+- Good for testing and development
+
+### Production Mode (Fly.io)
+- Uses **webhooks** for better performance
+- Includes health check endpoint at `/health`
+- Auto-scaling and auto-sleep capabilities
+- Optimized Docker container
 
 ## Support 💬
 

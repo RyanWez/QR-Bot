@@ -5,6 +5,10 @@ import uuid
 import os
 from urllib.parse import quote
 from dotenv import load_dotenv
+import asyncio
+from aiohttp import web
+from aiohttp.web_request import Request
+from aiohttp.web_response import Response
 
 # New imports for OpenCV
 import cv2
@@ -27,6 +31,9 @@ logger = logging.getLogger(__name__)
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 BOT_NAME = os.getenv('BOT_NAME', 'QR MM Bot')
 BOT_USERNAME = os.getenv('BOT_USERNAME', 'qrmmbot')
+WEBHOOK_URL = os.getenv('WEBHOOK_URL')
+PORT = int(os.getenv('PORT', 8080))
+HOST = os.getenv('HOST', '0.0.0.0')
 
 # Validate required environment variables
 if not TELEGRAM_TOKEN:
@@ -302,7 +309,51 @@ async def inline_qr(update: Update, context) -> None:
     await update.inline_query.answer(results, cache_time=10)
 
 
-def main() -> None:
+# Health check endpoint
+async def health_check(request: Request) -> Response:
+    """Health check endpoint for Fly.io"""
+    return web.Response(text="OK", status=200)
+
+# Webhook handler
+async def webhook_handler(request: Request) -> Response:
+    """Handle incoming webhook requests"""
+    try:
+        # Get the application from request app
+        application = request.app['telegram_app']
+        
+        # Get update data
+        update_data = await request.json()
+        update = Update.de_json(update_data, application.bot)
+        
+        # Process the update
+        await application.process_update(update)
+        
+        return web.Response(status=200)
+    except Exception as e:
+        logger.error(f"Error processing webhook: {e}")
+        return web.Response(status=500)
+
+def create_app(application: Application) -> web.Application:
+    """Create aiohttp web application"""
+    app = web.Application()
+    app['telegram_app'] = application
+    
+    # Add routes
+    app.router.add_get('/health', health_check)
+    app.router.add_post(f'/webhook/{TELEGRAM_TOKEN}', webhook_handler)
+    
+    return app
+
+async def setup_webhook(application: Application) -> None:
+    """Setup webhook for production"""
+    if WEBHOOK_URL:
+        webhook_url = f"{WEBHOOK_URL}/webhook/{TELEGRAM_TOKEN}"
+        await application.bot.set_webhook(webhook_url)
+        logger.info(f"Webhook set to: {webhook_url}")
+    else:
+        logger.warning("WEBHOOK_URL not set, webhook not configured")
+
+async def main() -> None:
     # Build application with timeout settings
     application = (
         Application.builder()
@@ -312,6 +363,8 @@ def main() -> None:
         .connect_timeout(30)
         .build()
     )
+    
+    # Add handlers
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CallbackQueryHandler(button_handler))
@@ -319,9 +372,71 @@ def main() -> None:
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message))
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo_message))
     application.add_handler(MessageHandler(~(filters.TEXT | filters.PHOTO | filters.COMMAND), handle_other_messages))
-    print("Bot is running...")
-    application.run_polling()
-
+    
+    # Initialize the application
+    await application.initialize()
+    
+    # Check if running in production (Fly.io) or development
+    if WEBHOOK_URL:
+        # Production mode with webhook
+        logger.info("Starting bot in webhook mode...")
+        
+        # Setup webhook
+        await setup_webhook(application)
+        
+        # Create web app
+        web_app = create_app(application)
+        
+        # Start the application
+        await application.start()
+        
+        # Run web server
+        runner = web.AppRunner(web_app)
+        await runner.setup()
+        site = web.TCPSite(runner, HOST, PORT)
+        await site.start()
+        
+        logger.info(f"Bot is running on {HOST}:{PORT} with webhook")
+        
+        # Keep the application running
+        try:
+            await asyncio.Event().wait()
+        except KeyboardInterrupt:
+            logger.info("Shutting down...")
+        finally:
+            await application.stop()
+            await runner.cleanup()
+    else:
+        # Development mode with polling
+        logger.info("Starting bot in polling mode...")
+        print("Bot is running in development mode...")
+        application.run_polling()
 
 if __name__ == '__main__':
-    main()
+    # Check if running in production or development
+    if WEBHOOK_URL:
+        # Production mode - use asyncio.run
+        asyncio.run(main())
+    else:
+        # Development mode - use sync approach
+        # Build application with timeout settings
+        application = (
+            Application.builder()
+            .token(TELEGRAM_TOKEN)
+            .read_timeout(30)
+            .write_timeout(30)
+            .connect_timeout(30)
+            .build()
+        )
+        
+        # Add handlers
+        application.add_handler(CommandHandler("start", start_command))
+        application.add_handler(CommandHandler("help", help_command))
+        application.add_handler(CallbackQueryHandler(button_handler))
+        application.add_handler(InlineQueryHandler(inline_qr))
+        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message))
+        application.add_handler(MessageHandler(filters.PHOTO, handle_photo_message))
+        application.add_handler(MessageHandler(~(filters.TEXT | filters.PHOTO | filters.COMMAND), handle_other_messages))
+        
+        print("Bot is running in development mode...")
+        application.run_polling()
