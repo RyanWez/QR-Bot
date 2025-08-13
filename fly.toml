@@ -1,37 +1,41 @@
-# fly.toml app configuration file generated for qr-mm-bot
-app = "qr-mm-bot"
-primary_region = "sin"
+# fly.toml app configuration file generated for qr-mm-bot on 2025-08-13T23:27:56+06:30
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'qr-mm-bot'
+primary_region = 'sin'
 
 [build]
 
 [env]
-  PORT = "8080"
+  PORT = '8080'
+
+[[mounts]]
+  source = 'qr_data'
+  destination = '/data'
 
 [http_service]
   internal_port = 8080
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
-  processes = ["app"]
+  processes = ['app']
 
-[http_service.concurrency]
-  type = "requests"
-  hard_limit = 100
-  soft_limit = 80
+  [http_service.concurrency]
+    type = 'requests'
+    hard_limit = 100
+    soft_limit = 80
 
-[[http_service.checks]]
-  interval = "15s"
-  timeout = "2s"
-  grace_period = "5s"
-  method = "GET"
-  path = "/health"
+  [[http_service.checks]]
+    interval = '15s'
+    timeout = '2s'
+    grace_period = '5s'
+    method = 'GET'
+    path = '/health'
 
-[vm]
-  cpu_kind = "shared"
+[[vm]]
+  memory = '512mb'
+  cpu_kind = 'shared'
   cpus = 1
-  memory_mb = 512
-
-[[mounts]]
-  source = "qr_data"
-  destination = "/data"
