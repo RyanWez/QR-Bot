@@ -89,7 +89,7 @@ async def help_command(update: Update, context) -> None:
 
 *Commands:*
 /start - Bot ကို စတင်အသုံးပြုရန်
-/help - အကူအညီ
+/help - အကူအညီ ရယူရန်
 /update - နောက်ဆုံး Update များကြည့်ရန်
 
     """
@@ -104,16 +104,14 @@ async def update_command(update: Update, context) -> None:
 • ✅ Reply functionality ထည့်ပြီးပါပြီ
 • 🔄 QR Code ပြန်လုပ်ပြီးတဲ့အခါ original message ကို reply ပြန်ပေးမယ်
 • 📝 /update command ထည့်ပြီးပါပြီ
-• ❓ Unknown commands အတွက် helpful response ထည့်ပြီးပါပြီ
+• ❓ Unknown commands အတွက် helpful response
 
 *📅 v1.01 - August 12, 2025*
 • 🎨 QR Code generation ပိုမြန်အောင် optimize လုပ်ပြီးပါပြီ
 • 📸 OpenCV နဲ့ QR Code reading ပိုတိကျအောင် ပြုပြင်ပြီးပါပြီ
-• 🔧 Memory management ကို ပိုကောင်းအောင် လုပ်ပြီးပါပြီ
-• 🌐 Webhook support ထည့်ပြီးပါပြီ
 
 *📅 v1.00 - August 11, 2025*
-• 🎉 QR MM Bot ကို စတင်ဖန်တီးပြီးပါပြီ
+• 🎉 QR MM Bot ကို စတင်အသုံးပြုနိုင်ပါပြီ
 • 🎨 QR Code ဖန်တီးခြင်း feature
 • 📸 QR Code ဖတ်ခြင်း feature
 • 🔄 Inline mode support
