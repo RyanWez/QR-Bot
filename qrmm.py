@@ -52,7 +52,7 @@ user_last_activity = defaultdict(float)
 def cleanup_inactive_users():
     """Clean up inactive users to save memory"""
     current_time = time.time()
-    inactive_threshold = 3600  # 1 hour
+    inactive_threshold = 1800  # 30 minutes - more aggressive cleanup
     
     inactive_users = [
         user_id for user_id, last_activity in user_last_activity.items()
