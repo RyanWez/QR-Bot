@@ -84,10 +84,8 @@ async def help_command(update: Update, context) -> None:
     - စာ သို့မဟုတ် link တစ်ခုခုကို တိုက်ရိုက် ပို့ပေးလိုက်ပါ။
     *2. QR Code ဖတ်ရန်*
     - QR Code ပါတဲ့ ဓာတ်ပုံတစ်ပုံကို ပို့ပေးလိုက်ပါ။
-    *3. Inline Mode*
-    - ဘယ် chat ထဲမှာမဆို `@qrmmbot` လို့ ရိုက်ထည့်ပြီး ခေါ်သုံးနိုင်ပါတယ်။
-
-    - Source Code ရယူရန်=> @RyanWez
+    
+    - *Source Code ရယူရန်*=>`@RyanWez`
     """
     await update.message.reply_text(help_text, parse_mode='Markdown')
 
@@ -141,7 +139,8 @@ async def handle_text_message(update: Update, context) -> None:
                     photo=bio, 
                     caption=f"✅ *QR Code ဖန်တီးပြီးပါပြီ *\n\n *ဒီ* : `{text}` အတွက် QR Code ပါ",
                     parse_mode='Markdown',
-                    reply_markup=reply_markup
+                    reply_markup=reply_markup,
+                    reply_to_message_id=update.message.message_id
                 )
             except Exception as send_error:
                 logger.error(f"Error sending photo: {send_error}")
@@ -154,7 +153,8 @@ async def handle_text_message(update: Update, context) -> None:
                 await update.message.reply_text(
                     f"✅ *QR Code ဖန်တီးပြီးပါပြီ *\n\n *ဒီ* : `{text}` အတွက် QR Code ပါ\n\n⚠️ ဓာတ်ပုံ ပို့ရာတွင် ပြဿနာရှိနေပါတယ်။ Network connection ကို စစ်ကြည့်ပါ။",
                     parse_mode='Markdown',
-                    reply_markup=reply_markup
+                    reply_markup=reply_markup,
+                    reply_to_message_id=update.message.message_id
                 )
                 
         except Exception as e:
@@ -233,7 +233,12 @@ async def handle_photo_message(update: Update, context) -> None:
             else:
                 reply_text = "❌ *QR Code မတွေ့ပါ*\n\nဒီပုံထဲမှာ QR Code မတွေ့ပါဘူး။ ရှင်းလင်းတဲ့ QR Code ပုံတစ်ပုံကို ထပ်ပို့ကြည့်ပါ။"
             
-            await update.message.reply_text(reply_text, parse_mode='Markdown', reply_markup=reply_markup)
+            await update.message.reply_text(
+                reply_text, 
+                parse_mode='Markdown', 
+                reply_markup=reply_markup,
+                reply_to_message_id=update.message.message_id
+            )
 
         except Exception as e:
             logger.error(f"Error decoding QR code with OpenCV: {e}")
