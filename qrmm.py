@@ -41,11 +41,10 @@ if not TELEGRAM_TOKEN:
     logger.error("TELEGRAM_BOT_TOKEN not found in environment variables!")
     raise ValueError("TELEGRAM_BOT_TOKEN is required. Please check your .env file.")
 
-# User states with memory optimization
+# User activity tracking for memory optimization
 import time
 from collections import defaultdict
 
-user_states = {}
 user_last_activity = defaultdict(float)
 
 # Memory cleanup function
@@ -60,7 +59,6 @@ def cleanup_inactive_users():
     ]
     
     for user_id in inactive_users:
-        user_states.pop(user_id, None)
         user_last_activity.pop(user_id, None)
     
     if inactive_users:
@@ -69,29 +67,44 @@ def cleanup_inactive_users():
 # --- Command Handlers ---
 async def start_command(update: Update, context) -> None:
     user = update.effective_user
-    keyboard = [
-        [InlineKeyboardButton("🎨 QR Code ဖန်တီးမယ်", callback_data='create_qr')],
-        [InlineKeyboardButton("📸 QR Code ဖတ်မယ်", callback_data='read_qr')],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    welcome_message = f"မင်္ဂလာပါ {user.first_name}!\n\nကျွန်တော်က QR Code Bot ပါ။ အောက်က ခလုတ်တွေကနေ လိုချင်တဲ့ ဝန်ဆောင်မှုကို ရွေးချယ်နိုင်ပါတယ်"
-    await update.message.reply_text(welcome_message, reply_markup=reply_markup)
+    welcome_message = f"""မင်္ဂလာပါ {user.first_name}! 👋
+
+🤖 ကျွန်တော်က QR Code Bot ပါ။
+
+*🎯 အသုံးပြုပုံ:*
+• `*QR Code ဖန်တီးရန်* - စာ၊ link၊ emoji စတာတွေကို ပို့ပေးပါ၊ ကျွန်တော်က QR ဖန်တီး‌ပေးပါမယ်။`
+• `*QR Code ဖတ်ရန်* - QR Code ပါတဲ့ ဓာတ်ပုံကို ပို့ပေးပါ၊ QR Code ထဲမှာ ပါတဲ့ အကြောင်းအရာတွေကို ကျွန်တော် ပြန်ပို့ပေးပါမယ်။`
+
+
+*💡Commands:*
+/help - အကူအညီ
+/update - နောက်ဆုံး Update များ
+
+*🚀 Rock!*"""
+    await update.message.reply_text(welcome_message, parse_mode='Markdown')
 
 async def help_command(update: Update, context) -> None:
     help_text = """
-*QR Code Bot အသုံးပြုပုံ*
+🤖 *QR Code Bot အသုံးပြုပုံ*
 
-*1. QR Code ဖန်တီးရန်*
-- စာ သို့မဟုတ် link တစ်ခုခုကို တိုက်ရိုက် ပို့ပေးလိုက်ပါ။
+*🎯 အလွယ်တကူ အသုံးပြုနည်း:*
 
-*2. QR Code ဖတ်ရန်*
-- QR Code ပါတဲ့ ဓာတ်ပုံတစ်ပုံကို ပို့ပေးလိုက်ပါ။
+*1. QR Code ဖန်တီးရန်* 🎨
+• စာ၊ link၊ emoji၊ နံပါတ် စတာတွေကို တိုက်ရိုက်ပို့လိုက်ပါ
+• ဥပမာ: `Hello World`, `https://google.com`, `09123456789`
 
-*Commands:*
+*2. QR Code ဖတ်ရန်* 📸
+• QR Code ပါတဲ့ ဓာတ်ပုံကို ပို့လိုက်ပါ
+• Bot က အလိုအလျောက် ဖတ်ပေးမယ်
+
+*🔧 Commands:*
 /start - Bot ကို စတင်အသုံးပြုရန်
 /help - အကူအညီ ရယူရန်
 /update - နောက်ဆုံး Update များကြည့်ရန်
 
+*💡 Tips:*
+• Link တွေမှာ `https://` ပါရင် ကောင်းပါတယ်
+• အကောင်းဆုံးကတော့ အစထဲက မတွေ့ခဲ့ကြရင်ပေါ့...
     """
     await update.message.reply_text(help_text, parse_mode='Markdown')
 
@@ -100,15 +113,25 @@ async def update_command(update: Update, context) -> None:
     changelog_text = """
 🚀 *QR MM Bot - Updates & Changelog*
 
+*📅 v2.0 - August 14, 2025* 🎉
+• 🔥 *Major Update*
+• ❌ Inline button တွေကို ဖြုတ်လိုက်ပါပြီ
+• 🤖 *Smart Detection* - အလိုအလျောက် သိနိုင်ပါပြီ
+  - စာ/Link ပို့ရင် → QR Code ဖန်တီးမယ်
+  - ဓာတ်ပုံ ပို့ရင် → QR Code ဖတ်မယ်
+• ⚡ ပိုမြန်၊ ပိုလွယ်ကူအောင် ပြုလုပ်ထားပါတယ်
+• 💬 Typing action ထည့်ထားပါတယ်
+• 🎯 /start နှိပ်ပြီး တန်းသုံးလို့ရပါပြီ
+
 *📅 v1.02 - August 13, 2025*
 • ✅ Reply functionality ထည့်ပြီးပါပြီ
 • 🔄 QR Code ပြန်လုပ်ပြီးတဲ့အခါ original message ကို reply ပြန်ပေးမယ်
-• 📝 /update command ထည့်ပြီးပါပြီ
+• � /update ဖcommand ထည့်ပြီးပါပြီ
 • ❓ Unknown commands အတွက် helpful response
 
 *📅 v1.01 - August 12, 2025*
 • 🎨 QR Code generation ပိုမြန်အောင် optimize လုပ်ပြီးပါပြီ
-• 📸 OpenCV နဲ့ QR Code reading ပိုတိကျအောင် ပြုပြင်ပြီးပါပြီ
+• � Op enCV နဲ့ QR Code reading ပိုတိကျအောင် ပြုပြင်ပြီးပါပြီ
 
 *📅 v1.00 - August 11, 2025*
 • 🎉 QR MM Bot ကို စတင်အသုံးပြုနိုင်ပါပြီ
@@ -122,7 +145,7 @@ async def update_command(update: Update, context) -> None:
 • 🎨 Custom QR Code designs
 • 📱 Batch QR Code generation
 
-*Dev:* @RyanWez
+*👨‍💻 Dev:* @RyanWez
 *GitHub:* `Coming Soon...`
     """
     await update.message.reply_text(changelog_text, parse_mode='Markdown')
@@ -130,25 +153,19 @@ async def update_command(update: Update, context) -> None:
 async def unknown_command(update: Update, context) -> None:
     """Handle unknown commands"""
     command = update.message.text
-    keyboard = [
-        [InlineKeyboardButton("🎨 QR Code ဖန်တီးမယ်", callback_data='create_qr')],
-        [InlineKeyboardButton("📸 QR Code ဖတ်မယ်", callback_data='read_qr')],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
     
     unknown_text = f"""
 ❓ *မသိရှိသော Command*
 
 `{command}` ဆိုတဲ့ command ကို မသိရှိပါဘူး။
 
-*အသုံးပြုနိုင်တဲ့ Commands:*
+*✅ အသုံးပြုနိုင်တဲ့ Commands:*
 /start - Bot ကို စတင်အသုံးပြုရန်
-/help - အကူအညီ
+/help - အကူအညီ ရယူရန်
 /update - နောက်ဆုံး Update များကြည့်ရန်
 
-*သို့မဟုတ်* အောက်က ခလုတ်တွေကနေ လုပ်ချင်တဲ့အရာကို ရွေးချယ်နိုင်ပါတယ်။
     """
-    await update.message.reply_text(unknown_text, parse_mode='Markdown', reply_markup=reply_markup)
+    await update.message.reply_text(unknown_text, parse_mode='Markdown')
 
 
 # --- Message Handlers ---
@@ -163,231 +180,148 @@ async def handle_text_message(update: Update, context) -> None:
     if len(user_last_activity) % 100 == 0:
         cleanup_inactive_users()
     
-    # Check user state
-    current_state = user_states.get(user_id)
+    # Smart detection: Text/Link = Create QR Code automatically
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
     
-    if current_state == 'create_mode':
-        # User is in QR creation mode - generate QR code
-        await context.bot.send_chat_action(chat_id=update.effective_chat.id, action=ChatAction.TYPING)
-        try:
-            # Generate QR code with optimized settings for speed and size
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,  # Lowest error correction for smaller size
-                box_size=8,  # Smaller box size for faster generation
-                border=2,    # Smaller border
-            )
-            qr.add_data(text)
-            qr.make(fit=True)
-            
-            qr_img = qr.make_image(fill_color="black", back_color="white")
-            bio = io.BytesIO()
-            bio.name = 'qr_code.png'
-            # Optimize PNG for smaller file size and faster upload
-            qr_img.save(bio, 'PNG', optimize=True, compress_level=9)
-            bio.seek(0)
-            
-            # Only show "QR Code ဖတ်မယ်" button as requested
-            keyboard = [
-                [InlineKeyboardButton("📸 QR Code ဖတ်မယ်", callback_data='read_qr')]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            # Try to send photo with better error handling
-            try:
-                await context.bot.send_photo(
-                    chat_id=update.message.chat_id, 
-                    photo=bio, 
-                    caption=f"✅ *QR Code ဖန်တီးပြီးပါပြီ *\n\n *ဒီ* : `{text}` အတွက် QR Code ပါ",
-                    parse_mode='Markdown',
-                    reply_markup=reply_markup,
-                    reply_to_message_id=update.message.message_id
-                )
-            except Exception as send_error:
-                logger.error(f"Error sending photo: {send_error}")
-                # If photo sending fails, send text message with retry button
-                keyboard = [
-                    [InlineKeyboardButton("🔄 ထပ်ကြိုးစားမယ်", callback_data='create_qr')],
-                    [InlineKeyboardButton("📸 QR Code ဖတ်မယ်", callback_data='read_qr')]
-                ]
-                reply_markup = InlineKeyboardMarkup(keyboard)
-                await update.message.reply_text(
-                    f"✅ *QR Code ဖန်တီးပြီးပါပြီ *\n\n *ဒီ* : `{text}` အတွက် QR Code ပါ\n\n⚠️ ဓာတ်ပုံ ပို့ရာတွင် ပြဿနာရှိနေပါတယ်။ Network connection ကို စစ်ကြည့်ပါ။",
-                    parse_mode='Markdown',
-                    reply_markup=reply_markup,
-                    reply_to_message_id=update.message.message_id
-                )
-                
-        except Exception as e:
-            logger.error(f"Error generating QR code: {e}")
-            keyboard = [
-                [InlineKeyboardButton("🔄 ထပ်ကြိုးစားမယ်", callback_data='create_qr')]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await update.message.reply_text(
-                "❌ QR Code ဖန်တီးရာတွင် အမှားတစ်ခုဖြစ်ပွားသွားပါတယ်။ Network connection ကို စစ်ကြည့်ပြီး ထပ်ကြိုးစားကြည့်ပါ။",
-                reply_markup=reply_markup
-            )
-            
-    elif current_state == 'read_mode':
-        # User is in QR reading mode but sent text - show error
-        keyboard = [
-            [InlineKeyboardButton("📸 QR Code ဖတ်မယ်", callback_data='read_qr')],
-            [InlineKeyboardButton("🎨 QR Code ဖန်တီးမယ်", callback_data='create_qr')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        await update.message.reply_text(
-            "❌ *မှားနေပါတယ်!*\n\nသင်က *QR Code ဖတ်မယ်* ကို ရွေးထားပါတယ်။ QR Code ပါတဲ့*ဓာတ်ပုံ* တစ်ပုံကို ပို့ပေးပါ။\n\n💡 QR Code ဖန်တီးချင်ရင် အောက်က ခလုတ်ကို နှိပ်ပါ။",
-            parse_mode='Markdown',
-            reply_markup=reply_markup
+    try:
+        # Generate QR code with optimized settings for speed and size
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,  # Lowest error correction for smaller size
+            box_size=8,  # Smaller box size for faster generation
+            border=2,    # Smaller border
         )
-    else:
-        # No mode selected - ask user to choose
-        keyboard = [
-            [InlineKeyboardButton("🎨 QR Code ဖန်တီးမယ်", callback_data='create_qr')],
-            [InlineKeyboardButton("📸 QR Code ဖတ်မယ်", callback_data='read_qr')],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
+        qr.add_data(text)
+        qr.make(fit=True)
+        
+        qr_img = qr.make_image(fill_color="black", back_color="white")
+        bio = io.BytesIO()
+        bio.name = 'qr_code.png'
+        # Optimize PNG for smaller file size and faster upload
+        qr_img.save(bio, 'PNG', optimize=True, compress_level=9)
+        bio.seek(0)
+        
+        # Try to send photo with better error handling
+        try:
+            await context.bot.send_photo(
+                chat_id=update.message.chat_id, 
+                photo=bio, 
+                caption=f"✅ *QR Code ဖန်တီးပြီးပါပြီ*\n\n📝 *အချက်အလက်:* `{text}`\n\n💡 *Tip:* QR Code ဖတ်ချင်ရင် ဓာတ်ပုံ ပို့လိုက်ပါ",
+                parse_mode='Markdown',
+                reply_to_message_id=update.message.message_id
+            )
+        except Exception as send_error:
+            logger.error(f"Error sending photo: {send_error}")
+            # If photo sending fails, send text message
+            await update.message.reply_text(
+                f"✅ *QR Code ဖန်တီးပြီးပါပြီ*\n\n📝 *အချက်အလက်:* `{text}`\n\n⚠️ ဓာတ်ပုံ ပို့ရာတွင် ပြဿနာရှိနေပါတယ်။ Network connection ကို စစ်ကြည့်ပါ။",
+                parse_mode='Markdown',
+                reply_to_message_id=update.message.message_id
+            )
+            
+    except Exception as e:
+        logger.error(f"Error generating QR code: {e}")
         await update.message.reply_text(
-            "🤔 *ဘာလုပ်ချင်လဲ ရွေးပါ*\n\nအရင်ဆုံး အောက်က ခလုတ်တွေကနေ လုပ်ချင်တဲ့အရာကို ရွေးချယ်ပါ။",
-            parse_mode='Markdown',
-            reply_markup=reply_markup
+            "❌ QR Code ဖန်တီးရာတွင် အမှားတစ်ခုဖြစ်ပွားသွားပါတယ်။ Network connection ကို စစ်ကြည့်ပြီး ထပ်ကြိုးစားကြည့်ပါ။",
+            reply_to_message_id=update.message.message_id
         )
 
 async def handle_photo_message(update: Update, context) -> None:
     user_id = update.effective_user.id
-    current_state = user_states.get(user_id)
     
-    if current_state == 'read_mode':
-        # User is in QR reading mode - read QR code
-        chat_id = update.effective_chat.id
-        await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+    # Update user activity
+    user_last_activity[user_id] = time.time()
+    
+    # Smart detection: Photo = Read QR Code automatically
+    chat_id = update.effective_chat.id
+    await context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
 
-        try:
-            photo_file = await update.message.photo[-1].get_file()
-            
-            # Download the photo to a byte array in memory
-            photo_bytes = await photo_file.download_as_bytearray()
-            
-            # Convert byte array to a NumPy array
-            np_array = np.frombuffer(photo_bytes, np.uint8)
-            
-            # Decode the NumPy array into an image
-            img = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
+    try:
+        photo_file = await update.message.photo[-1].get_file()
+        
+        # Download the photo to a byte array in memory
+        photo_bytes = await photo_file.download_as_bytearray()
+        
+        # Convert byte array to a NumPy array
+        np_array = np.frombuffer(photo_bytes, np.uint8)
+        
+        # Decode the NumPy array into an image
+        img = cv2.imdecode(np_array, cv2.IMREAD_COLOR)
 
-            if img is None:
-                await update.message.reply_text("❌ ဓာတ်ပုံကို ဖတ်လို့မရပါဘူး။ တခြားပုံတစ်ပုံကို ထပ်ပို့ကြည့်ပါ။")
-                return
-
-            # Initialize the QRCode detector
-            detector = cv2.QRCodeDetector()
-            data, vertices, straight_qrcode = detector.detectAndDecode(img)
-            
-            # Only show "QR Code ဖန်တီးမယ်" button as requested
-            keyboard = [
-                [InlineKeyboardButton("🎨 QR Code ဖန်တီးမယ်", callback_data='create_qr')]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            if data:
-                reply_text = f"✅ *QR Code ဖတ်ပြီးပါပြီ်*\n\nတွေ့ရှိသော အချက်အလက်:\n`{data}`"
-            else:
-                reply_text = "❌ *QR Code မတွေ့ပါ*\n\nဒီပုံထဲမှာ QR Code မတွေ့ပါဘူး။ ရှင်းလင်းတဲ့ QR Code ပုံတစ်ပုံကို ထပ်ပို့ကြည့်ပါ။"
-            
+        if img is None:
             await update.message.reply_text(
-                reply_text, 
-                parse_mode='Markdown', 
-                reply_markup=reply_markup,
+                "❌ *ဓာတ်ပုံ ဖတ်၍မရပါ*\n\nဓာတ်ပုံကို ဖတ်လို့မရပါဘူး။ တခြားပုံတစ်ပုံကို ထပ်ပို့ကြည့်ပါ။\n\n💡 *Tip:* QR Code ဖန်တီးချင်ရင် စာ သို့ link ပို့လိုက်ပါ",
+                parse_mode='Markdown',
                 reply_to_message_id=update.message.message_id
             )
+            return
 
-        except Exception as e:
-            logger.error(f"Error decoding QR code with OpenCV: {e}")
-            keyboard = [
-                [InlineKeyboardButton("📸 QR Code ထပ်ဖတ်မယ်", callback_data='read_qr')]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            await update.message.reply_text(
-                "❌ QR Code ကိုဖတ်ရာတွင် အမှားတစ်ခုဖြစ်ပွားသွားပါတယ်။ ထပ်ကြိုးစားကြည့်ပါ။",
-                reply_markup=reply_markup
-            )
-            
-    elif current_state == 'create_mode':
-        # User is in QR creation mode but sent photo - show error
-        keyboard = [
-            [InlineKeyboardButton("🎨 QR Code ဖန်တီးမယ်", callback_data='create_qr')],
-            [InlineKeyboardButton("📸 QR Code ဖတ်မယ်", callback_data='read_qr')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
+        # Initialize the QRCode detector
+        detector = cv2.QRCodeDetector()
+        data, vertices, straight_qrcode = detector.detectAndDecode(img)
+        
+        if data:
+            reply_text = f"✅ *QR Code ဖတ်ပြီးပါပြီ*\n\n📋 *တွေ့ရှိသော အချက်အလက်:*\n`{data}`\n\n💡 *Tip:* QR Code ဖန်တီးချင်ရင် စာ သို့ link ပို့လိုက်ပါ"
+        else:
+            reply_text = "❌ *QR Code မတွေ့ပါ*\n\nဒီပုံထဲမှာ QR Code မတွေ့ပါဘူး။ ရှင်းလင်းတဲ့ QR Code ပုံတစ်ပုံကို ထပ်ပို့ကြည့်ပါ။\n\n💡 *Tips:*\n• QR Code ကို ရှင်းရှင်းလင်းလင်း ရိုက်ပါ\n• အလင်း လုံလောက်အောင် ရိုက်ပါ\n• QR Code တစ်ခုလုံး ပါအောင် ရိုက်ပါ"
+        
         await update.message.reply_text(
-            "❌ *မှားနေပါတယ်!*\n\nသင်က *QR Code ဖန်တီးမယ်* ကို ရွေးထားပါတယ်။ QR Code ပြုလုပ်လိုတဲ့*စာ* သို့မဟုတ် *Link* ကို ပို့ပေးပါ။\n\n💡 QR Code ဖတ်ချင်ရင် အောက်က ခလုတ်ကို နှိပ်ပါ။",
+            reply_text, 
             parse_mode='Markdown',
-            reply_markup=reply_markup
+            reply_to_message_id=update.message.message_id
         )
-    else:
-        # No mode selected - ask user to choose
-        keyboard = [
-            [InlineKeyboardButton("🎨 QR Code ဖန်တီးမယ်", callback_data='create_qr')],
-            [InlineKeyboardButton("📸 QR Code ဖတ်မယ်", callback_data='read_qr')],
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
+
+    except Exception as e:
+        logger.error(f"Error decoding QR code with OpenCV: {e}")
         await update.message.reply_text(
-            "🤔 *ဘာလုပ်ချင်လဲ ရွေးပါ*\n\nအရင်ဆုံး အောက်က ခလုတ်တွေကနေ လုပ်ချင်တဲ့အရာကို ရွေးချယ်ပါ။",
+            "❌ *QR Code ဖတ်၍မရပါ*\n\nQR Code ကိုဖတ်ရာတွင် အမှားတစ်ခုဖြစ်ပွားသွားပါတယ်။ ထပ်ကြိုးစားကြည့်ပါ။\n\n💡 *Tip:* QR Code ဖန်တီးချင်ရင် စာ သို့ link ပို့လိုက်ပါ",
             parse_mode='Markdown',
-            reply_markup=reply_markup
+            reply_to_message_id=update.message.message_id
         )
 
 
 async def handle_other_messages(update: Update, context) -> None:
+    """Handle other message types (stickers, documents, etc.)"""
     user_id = update.effective_user.id
-    current_state = user_states.get(user_id)
     
-    keyboard = [
-        [InlineKeyboardButton("🎨 QR Code ဖန်တီးမယ်", callback_data='create_qr')],
-        [InlineKeyboardButton("📸 QR Code ဖတ်မယ်", callback_data='read_qr')],
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    # Update user activity
+    user_last_activity[user_id] = time.time()
     
-    if current_state == 'create_mode':
-        await update.message.reply_text(
-            "❌ *မှားနေပါတယ်!*\n\nသင်က *QR Code ဖန်တီးမယ်* ကို ရွေးထားပါတယ်။ QR Code ပြုလုပ်လိုတဲ့*စာ* သို့မဟုတ် *Link* ကို ပို့ပေးပါ။",
-            parse_mode='Markdown',
-            reply_markup=reply_markup
-        )
-    elif current_state == 'read_mode':
-        await update.message.reply_text(
-            "❌ *မှားနေပါတယ်!*\n\nသင်က *QR Code ဖတ်မယ်* ကို ရွေးထားပါတယ်။ QR Code ပါတဲ့*ဓာတ်ပုံ* တစ်ပုံကို ပို့ပေးပါ။",
-            parse_mode='Markdown',
-            reply_markup=reply_markup
-        )
-    else:
-        await update.message.reply_text(
-            "🤔 *ဘာလုပ်ချင်လဲ ရွေးပါ*\n\nအရင်ဆုံး အောက်က ခလုတ်တွေကနေ လုပ်ချင်တဲ့အရာကို ရွေးချယ်ပါ။",
-            parse_mode='Markdown',
-            reply_markup=reply_markup
-        )
+    # Determine message type for better response
+    message_type = "အခြား"
+    if update.message.sticker:
+        message_type = "Sticker"
+    elif update.message.document:
+        message_type = "Document"
+    elif update.message.video:
+        message_type = "Video"
+    elif update.message.audio:
+        message_type = "Audio"
+    elif update.message.voice:
+        message_type = "Voice message"
+    elif update.message.location:
+        message_type = "Location"
+    elif update.message.contact:
+        message_type = "Contact"
+    
+    await update.message.reply_text(
+        f"🤔 *{message_type} ကို လက်ခံ၍မရပါ*\n\n*✅ လက်ခံနိုင်သော အမျိုးအစားများ:*\n• 📝 *စာ/Text* - QR Code ဖန်တီးမယ်\n• 🔗 *Link* - QR Code ဖန်တီးမယ်\n• 📸 *ဓာတ်ပုံ* - QR Code ဖတ်မယ်\n\n💡 *အသုံးပြုပုံ:*\n• QR Code ဖန်တီးချင်ရင် → စာ သို့ link ပို့ပါ\n• QR Code ဖတ်ချင်ရင် → ဓာတ်ပုံ ပို့ပါ",
+        parse_mode='Markdown',
+        reply_to_message_id=update.message.message_id
+    )
 
 
 # --- Callback & Inline Handlers ---
 async def button_handler(update: Update, context) -> None:
+    """Handle any remaining callback queries (for backward compatibility)"""
     query = update.callback_query
     await query.answer()
-    user_id = query.from_user.id
     
-    if query.data == 'create_qr':
-        user_states[user_id] = 'create_mode'
-        # Send new message instead of editing to avoid error
-        await query.message.reply_text(
-            "🎨 *QR Code ဖန်တီးမယ်* ကို ရွေးထားပါတယ်\n\nQR Code ပြုလုပ်လိုတဲ့*စာ* သို့မဟုတ် *Link* ကို ပို့ပေးလိုက်ပါ။\n\n⚠️ *သတိ:* ဓာတ်ပုံ ပို့လို့မရပါဘူးနော်။",
-            parse_mode='Markdown'
-        )
-    elif query.data == 'read_qr':
-        user_states[user_id] = 'read_mode'
-        # Send new message instead of editing to avoid error
-        await query.message.reply_text(
-            "📸 *QR Code ဖတ်မယ်* ကို ရွေးထားပါတယ်\n\nQR Code ပါတဲ့*ဓာတ်ပုံ* တစ်ပုံကို ပို့ပေးပါ။\n\n⚠️ *သတိ:* စာ သို့မဟုတ် Link ပို့လို့မရပါဘူးနော်။",
-            parse_mode='Markdown'
-        )
+    # Since we removed inline buttons, just send a helpful message
+    await query.message.reply_text(
+        "🚀 *Bot ကို အဆင့်မြှင့်တင်ပြီးပါပြီ!*\n\n*✨ အခုတော့ ပိုလွယ်ပါပြီ:*\n• QR Code ဖန်တီးချင်ရင် → စာ သို့ link ပို့လိုက်ပါ\n• QR Code ဖတ်ချင်ရင် → ဓာတ်ပုံ ပို့လိုက်ပါ\n\n*🎯 ခလုတ်တွေ နှိပ်စရာမလို!*",
+        parse_mode='Markdown'
+    )
 
 async def inline_qr(update: Update, context) -> None:
     query_text = update.inline_query.query
@@ -473,11 +407,13 @@ def setup_handlers(application: Application) -> None:
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("update", update_command))
     
-    # Callback and inline handlers
-    application.add_handler(CallbackQueryHandler(button_handler))
+    # Inline handler for backward compatibility
     application.add_handler(InlineQueryHandler(inline_qr))
     
-    # Message handlers
+    # Callback handler for backward compatibility (simplified)
+    application.add_handler(CallbackQueryHandler(butler))
+    
+    # Message handlers (smart detection)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message))
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo_message))
     application.add_handler(MessageHandler(~(filters.TEXT | filters.PHOTO | filters.COMMAND), handle_other_messages))
