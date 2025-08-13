@@ -79,15 +79,78 @@ async def start_command(update: Update, context) -> None:
 
 async def help_command(update: Update, context) -> None:
     help_text = """
-    *QR Code Bot အသုံးပြုပုံ*
-    *1. QR Code ဖန်တီးရန်*
-    - စာ သို့မဟုတ် link တစ်ခုခုကို တိုက်ရိုက် ပို့ပေးလိုက်ပါ။
-    *2. QR Code ဖတ်ရန်*
-    - QR Code ပါတဲ့ ဓာတ်ပုံတစ်ပုံကို ပို့ပေးလိုက်ပါ။
-    
-    - *Source Code ရယူရန်*=>`@RyanWez`
+*QR Code Bot အသုံးပြုပုံ*
+
+*1. QR Code ဖန်တီးရန်*
+- စာ သို့မဟုတ် link တစ်ခုခုကို တိုက်ရိုက် ပို့ပေးလိုက်ပါ။
+
+*2. QR Code ဖတ်ရန်*
+- QR Code ပါတဲ့ ဓာတ်ပုံတစ်ပုံကို ပို့ပေးလိုက်ပါ။
+
+*Commands:*
+/start - Bot ကို စတင်အသုံးပြုရန်
+/help - အကူအညီ
+/update - နောက်ဆုံး Update များကြည့်ရန်
+
     """
     await update.message.reply_text(help_text, parse_mode='Markdown')
+
+async def update_command(update: Update, context) -> None:
+    """Show bot updates and changelog"""
+    changelog_text = """
+🚀 *QR MM Bot - Updates & Changelog*
+
+*📅 v1.02 - August 13, 2025*
+• ✅ Reply functionality ထည့်ပြီးပါပြီ
+• 🔄 QR Code ပြန်လုပ်ပြီးတဲ့အခါ original message ကို reply ပြန်ပေးမယ်
+• 📝 /update command ထည့်ပြီးပါပြီ
+• ❓ Unknown commands အတွက် helpful response ထည့်ပြီးပါပြီ
+
+*📅 v1.01 - August 12, 2025*
+• 🎨 QR Code generation ပိုမြန်အောင် optimize လုပ်ပြီးပါပြီ
+• 📸 OpenCV နဲ့ QR Code reading ပိုတိကျအောင် ပြုပြင်ပြီးပါပြီ
+• 🔧 Memory management ကို ပိုကောင်းအောင် လုပ်ပြီးပါပြီ
+• 🌐 Webhook support ထည့်ပြီးပါပြီ
+
+*📅 v1.00 - August 11, 2025*
+• 🎉 QR MM Bot ကို စတင်ဖန်တီးပြီးပါပြီ
+• 🎨 QR Code ဖန်တီးခြင်း feature
+• 📸 QR Code ဖတ်ခြင်း feature
+• 🔄 Inline mode support
+• 🇲🇲 Myanmar language support
+
+*🔮 Coming Soon:*
+• 📊 QR Code analytics
+• 🎨 Custom QR Code designs
+• 📱 Batch QR Code generation
+
+*Dev:* @RyanWez
+*GitHub:* `Coming Soon...`
+    """
+    await update.message.reply_text(changelog_text, parse_mode='Markdown')
+
+async def unknown_command(update: Update, context) -> None:
+    """Handle unknown commands"""
+    command = update.message.text
+    keyboard = [
+        [InlineKeyboardButton("🎨 QR Code ဖန်တီးမယ်", callback_data='create_qr')],
+        [InlineKeyboardButton("📸 QR Code ဖတ်မယ်", callback_data='read_qr')],
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    unknown_text = f"""
+❓ *မသိရှိသော Command*
+
+`{command}` ဆိုတဲ့ command ကို မသိရှိပါဘူး။
+
+*အသုံးပြုနိုင်တဲ့ Commands:*
+/start - Bot ကို စတင်အသုံးပြုရန်
+/help - အကူအညီ
+/update - နောက်ဆုံး Update များကြည့်ရန်
+
+*သို့မဟုတ်* အောက်က ခလုတ်တွေကနေ လုပ်ချင်တဲ့အရာကို ရွေးချယ်နိုင်ပါတယ်။
+    """
+    await update.message.reply_text(unknown_text, parse_mode='Markdown', reply_markup=reply_markup)
 
 
 # --- Message Handlers ---
@@ -407,13 +470,22 @@ async def setup_webhook(application: Application) -> None:
 
 def setup_handlers(application: Application) -> None:
     """Setup all bot handlers"""
+    # Command handlers (specific commands first)
     application.add_handler(CommandHandler("start", start_command))
     application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("update", update_command))
+    
+    # Callback and inline handlers
     application.add_handler(CallbackQueryHandler(button_handler))
     application.add_handler(InlineQueryHandler(inline_qr))
+    
+    # Message handlers
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message))
     application.add_handler(MessageHandler(filters.PHOTO, handle_photo_message))
     application.add_handler(MessageHandler(~(filters.TEXT | filters.PHOTO | filters.COMMAND), handle_other_messages))
+    
+    # Unknown command handler (must be last)
+    application.add_handler(MessageHandler(filters.COMMAND, unknown_command))
 
 def create_application() -> Application:
     """Create telegram application with timeout settings"""
