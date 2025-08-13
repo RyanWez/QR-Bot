@@ -104,7 +104,7 @@ async def help_command(update: Update, context) -> None:
 
 *💡 Tips:*
 • Link တွေမှာ `https://` ပါရင် ကောင်းပါတယ်
-• အကောင်းဆုံးကတော့ အစထဲက မတွေ့ခဲ့ကြရင်ပေါ့...
+• `အကောင်းဆုံးကတော့ အစထဲက မတွေ့ခဲ့ကြရင်ပေါ့...`
     """
     await update.message.reply_text(help_text, parse_mode='Markdown')
 
@@ -117,7 +117,7 @@ async def update_command(update: Update, context) -> None:
 • 🔥 *Major Update*
 • ❌ Inline button တွေကို ဖြုတ်လိုက်ပါပြီ
 • 🤖 *Smart Detection* - အလိုအလျောက် သိနိုင်ပါပြီ
-  - စာ/Link ပို့ရင် → QR Code ဖန်တီးမယ်
+  - Text or Link ပို့ရင် → QR Code ဖန်တီးမယ်
   - ဓာတ်ပုံ ပို့ရင် → QR Code ဖတ်မယ်
 • ⚡ ပိုမြန်၊ ပိုလွယ်ကူအောင် ပြုလုပ်ထားပါတယ်
 • 💬 Typing action ထည့်ထားပါတယ်
@@ -126,12 +126,12 @@ async def update_command(update: Update, context) -> None:
 *📅 v1.02 - August 13, 2025*
 • ✅ Reply functionality ထည့်ပြီးပါပြီ
 • 🔄 QR Code ပြန်လုပ်ပြီးတဲ့အခါ original message ကို reply ပြန်ပေးမယ်
-• � /update ဖcommand ထည့်ပြီးပါပြီ
+• 📝 /update command ထည့်ပြီးပါပြီ
 • ❓ Unknown commands အတွက် helpful response
 
 *📅 v1.01 - August 12, 2025*
 • 🎨 QR Code generation ပိုမြန်အောင် optimize လုပ်ပြီးပါပြီ
-• � Op enCV နဲ့ QR Code reading ပိုတိကျအောင် ပြုပြင်ပြီးပါပြီ
+• 📝 Op enCV နဲ့ QR Code reading ပိုတိကျအောင် ပြုပြင်ပြီးပါပြီ
 
 *📅 v1.00 - August 11, 2025*
 • 🎉 QR MM Bot ကို စတင်အသုံးပြုနိုင်ပါပြီ
@@ -411,7 +411,7 @@ def setup_handlers(application: Application) -> None:
     application.add_handler(InlineQueryHandler(inline_qr))
     
     # Callback handler for backward compatibility (simplified)
-    application.add_handler(CallbackQueryHandler(butler))
+    application.add_handler(CallbackQueryHandler(button_handler))
     
     # Message handlers (smart detection)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_message))
