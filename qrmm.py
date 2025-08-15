@@ -67,20 +67,20 @@ def cleanup_inactive_users():
 # --- Command Handlers ---
 async def start_command(update: Update, context) -> None:
     user = update.effective_user
-    welcome_message = f"""မင်္ဂလာပါ {user.first_name}! 👋
+    welcome_message = f"""Welcome {user.first_name}! 👋
 
 🤖 ကျွန်တော်က QR Code Bot ပါ။
 
 *🎯 အသုံးပြုပုံ:*
-• *QR Code ဖန်တီးရန်* - စာ၊ link၊ emoji စတာတွေကို ပို့ပေးပါ၊ ကျွန်တော်က QR ဖန်တီး‌ပေးပါမယ်။
-• *QR Code ဖတ်ရန်* - QR Code ပါတဲ့ ဓာတ်ပုံကို ပို့ပေးပါ၊ QR Code ထဲမှာ ပါတဲ့ အကြောင်းအရာတွေကို ကျွန်တော် ပြန်ပို့ပေးပါမယ်။
-
+• QR Code ပြုလုပ်ချင်တဲ့ စာသား၊ နံပါတ် ၊ Link တွေကို ပို့ပေးပါနော်။ 
+• QR Code မှာ ပါတဲ့ အချက်အလက်တွေကို သိချင်ပါက QR Code ပုံကို ပို့ပေးပါနော်။
+• Keyboard ဘယ်ဘက် ထောင့်စွန်းမှာ * Open * ဆိုတဲ့ ခလုတ်ကို နှိပ်ပြီးလည်း ပြုလုပ်နိုင်ပါတယ်။ 🎉
 
 *💡Commands:*
 /help - အကူအညီ
 /update - နောက်ဆုံး Update များ
 
-*🚀 Rock!*"""
+"""
     await update.message.reply_text(welcome_message, parse_mode='Markdown')
 
 async def help_command(update: Update, context) -> None:
@@ -111,6 +111,11 @@ async def update_command(update: Update, context) -> None:
     """Show bot updates and changelog"""
     changelog_text = """
 🚀 *QR MM Bot - Updates & Changelog*
+
+*📅 v2.0.1 - August 15, 2025* 🎉
+ 🔥 *Add Feature*
+• Web Mini App အနေနဲ့ အသုံးပြုနိုင်အောင် ပြုလုပ်ထားပါတယ်၊
+• Keyboard ဘယ်ဘက်ထောင့်စွန်းက Open ကို နှိပ်ပြီး သုံးနိုင်ပါတယ်။
 
 *📅 v2.0 - August 14, 2025* 🎉
 • 🔥 *Major Update*
