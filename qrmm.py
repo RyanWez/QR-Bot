@@ -72,8 +72,8 @@ async def start_command(update: Update, context) -> None:
 🤖 ကျွန်တော်က QR Code Bot ပါ။
 
 *🎯 အသုံးပြုပုံ:*
-• `*QR Code ဖန်တီးရန်* - စာ၊ link၊ emoji စတာတွေကို ပို့ပေးပါ၊ ကျွန်တော်က QR ဖန်တီး‌ပေးပါမယ်။`
-• `*QR Code ဖတ်ရန်* - QR Code ပါတဲ့ ဓာတ်ပုံကို ပို့ပေးပါ၊ QR Code ထဲမှာ ပါတဲ့ အကြောင်းအရာတွေကို ကျွန်တော် ပြန်ပို့ပေးပါမယ်။`
+• *QR Code ဖန်တီးရန်* - စာ၊ link၊ emoji စတာတွေကို ပို့ပေးပါ၊ ကျွန်တော်က QR ဖန်တီး‌ပေးပါမယ်။
+• *QR Code ဖတ်ရန်* - QR Code ပါတဲ့ ဓာတ်ပုံကို ပို့ပေးပါ၊ QR Code ထဲမှာ ပါတဲ့ အကြောင်းအရာတွေကို ကျွန်တော် ပြန်ပို့ပေးပါမယ်။
 
 
 *💡Commands:*
@@ -90,12 +90,11 @@ async def help_command(update: Update, context) -> None:
 *🎯 အလွယ်တကူ အသုံးပြုနည်း:*
 
 *1. QR Code ဖန်တီးရန်* 🎨
-• စာ၊ link၊ emoji၊ နံပါတ် စတာတွေကို တိုက်ရိုက်ပို့လိုက်ပါ
-• ဥပမာ: `Hello World`, `https://google.com`, `09123456789`
+• စာ၊ link၊ emoji၊ နံပါတ် စတာတွေကို ပို့ပေးပါ
 
 *2. QR Code ဖတ်ရန်* 📸
 • QR Code ပါတဲ့ ဓာတ်ပုံကို ပို့လိုက်ပါ
-• Bot က အလိုအလျောက် ဖတ်ပေးမယ်
+• ကျွန်တော် က အလိုအလျောက် ဖတ်ပေးပါမယ်
 
 *🔧 Commands:*
 /start - Bot ကို စတင်အသုံးပြုရန်
@@ -103,8 +102,8 @@ async def help_command(update: Update, context) -> None:
 /update - နောက်ဆုံး Update များကြည့်ရန်
 
 *💡 Tips:*
-• Link တွေမှာ `https://` ပါရင် ကောင်းပါတယ်
-• `အကောင်းဆုံးကတော့ အစထဲက မတွေ့ခဲ့ကြရင်ပေါ့...`
+• Link တွေမှာ *https://* ပါရင် ကောင်းပါတယ်
+• အကောင်းဆုံးကတော့ အစထဲက မတွေ့ခဲ့ကြရင်ပေါ့...
     """
     await update.message.reply_text(help_text, parse_mode='Markdown')
 
