@@ -116,7 +116,7 @@ async def update_command(update: Update, context) -> None:
  🔥 *Add Feature*
 • Web Mini App အနေနဲ့ အသုံးပြုနိုင်အောင် ပြုလုပ်ထားပါတယ်၊
 • Keyboard ဘယ်ဘက်ထောင့်စွန်းက Open ကို နှိပ်ပြီး သုံးနိုင်ပါတယ်။
-• ဒီ Link [ryanwez.github.io] မှလည်း Web Version ကို အသုံးပြုနိုင်ပါတယ်။ 
+• ဒီ Link [ryanwez.github.io/QR-Code] မှလည်း Web Version ကို အသုံးပြုနိုင်ပါတယ်။ 
 
 *📅 v2.0 - August 14, 2025* 🎉
 • 🔥 *Major Update*
